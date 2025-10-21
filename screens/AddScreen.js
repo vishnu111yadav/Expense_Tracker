@@ -6,7 +6,7 @@ import {
   KeyboardAvoidingView,
   TextInput,
 } from "react-native";
-import { DateTimePickerResult } from "@react-native-community/datetimepicker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import format from "date-fns/format";
 import { Picker } from "@react-native-picker/picker";
 // import { db, auth } from "../firebase.js";
@@ -112,8 +112,8 @@ const AddScreen = ({ navigation }) => {
           }}
         />
         {show && (
-          <DateTimePickerResult
-            value={date.toDateString()}
+          <DateTimePicker
+            value={date}
             mode={mode}
             is24Hour={true}
             display="default"
