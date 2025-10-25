@@ -9,16 +9,18 @@ import {
 } from "react-native";
 import { FontAwesome, EvilIcons, FontAwesome5 } from "@expo/vector-icons";
 import { db } from "../firebase";
+import { doc, deleteDoc } from "firebase/firestore";
 
 const ModalAction = ({ modalVisible, setModalVisible, id, navigation }) => {
-  const deleteExpense = () => {
-    db.collection("expense")
-      .doc(id)
-      .delete()
-      .then(() => {
-        alert("Deleted Successfully");
-      })
-      .catch((error) => alert(error.message));
+  const deleteExpense = async () => {
+    if (!id) return;
+    try {
+      const docRef = doc(db, "expense", id); // reference to document
+      await deleteDoc(docRef);
+      alert("Deleted Successfully");
+    } catch (error) {
+      alert(error.message);
+    }
   };
   return (
     <View style={styles.centeredView}>
@@ -48,7 +50,7 @@ const ModalAction = ({ modalVisible, setModalVisible, id, navigation }) => {
                   size={40}
                   color="#61ACb8"
                   onPress={() => {
-                    navigation.navigate("update", {
+                    navigation.navigate("Update", {
                       itemId: id,
                     }) & setModalVisible(!modalVisible);
                   }}
@@ -56,7 +58,7 @@ const ModalAction = ({ modalVisible, setModalVisible, id, navigation }) => {
               </TouchableOpacity>
               <TouchableOpacity activeOpacity={0.5} style={styles.trash}>
                 <FontAwesome
-                  name="trash-0"
+                  name="trash-o"
                   size={32}
                   onPress={() => deleteExpense()}
                   color="red"

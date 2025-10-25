@@ -4,14 +4,14 @@ import { ListItem, Text, Divider } from "react-native-elements";
 import { MaterialIcons } from "@expo/vector-icons";
 import ModalAction from "./ModalAction";
 
-const CustomListItem = ({ info, navigation, id }) => {
+export const CustomListItem = ({ info, navigation, id }) => {
   const [modalVisible, setModalVisible] = useState(false);
 
   return (
     <>
       <View>
-        <ListItem onPress={() => setModalVisible(true)}>
-          {info.type === "expense" ? (
+        <ListItem key={id} onPress={() => setModalVisible(true)}>
+          {info?.type === "expense" ? (
             <View style={styles.left}>
               <MaterialIcons name="money-off" size={24} color="white" />
             </View>

@@ -6,10 +6,11 @@ import {
   KeyboardAvoidingView,
   TextInput,
 } from "react-native";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import format from "date-fns/format";
 import { Picker } from "@react-native-picker/picker";
-// import { db, auth } from "../firebase.js";
+import { db, auth } from "../firebase.js";
 import { StatusBar } from "expo-status-bar";
 // import firebase from "firebase";
 
@@ -21,31 +22,12 @@ const AddScreen = ({ navigation }) => {
   const [amount, setAmount] = useState("");
   const [selected, setSelected] = useState("expense");
   const [submitLoading, setSubmitLoading] = useState(false);
+
   useLayoutEffect(() => {
     navigation.setOptions({
       title: "Add Expense",
     });
   }, [navigation]);
-  // const createExpense = () => {
-  //   if (input && amount && date && selected && auth) {
-  //     setSubmitLoading(true);
-  //     db.collection("expense")
-  //       .add({
-  //         email: auth.currentUser.email,
-  //         text: input,
-  //         price: amount,
-  //         type: selected,
-  //         Timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-  //       })
-  //       .then(() => {
-  //         clearInput();
-  //       })
-  //       .catch((error) => alert(error.message));
-  //   } else {
-  //     alert("All fields Are Required");
-  //     setSubmitLoading(false);
-  //   }
-  // };
 
   const createExpense = async () => {
     if (input && amount && date && selected && auth?.currentUser) {

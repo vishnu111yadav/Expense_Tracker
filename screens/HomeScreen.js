@@ -2,8 +2,16 @@ import React, { useEffect, useLayoutEffect, useState } from "react";
 import { StyleSheet, View, TouchableOpacity } from "react-native";
 import { Text } from "react-native-elements";
 import { auth, db } from "../firebase.js";
-import CustomListItem from "../components/CustomListItem";
+import { CustomListItem } from "../components/CustomListItem";
 import { StatusBar } from "expo-status-bar";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  getDocs,
+} from "firebase/firestore";
 import { AntDesign, Feather, FontAwesome5 } from "@expo/vector-icons";
 
 const HomeScreen = ({ navigation }) => {
@@ -15,48 +23,63 @@ const HomeScreen = ({ navigation }) => {
   const [transactions, setTransactions] = useState([]);
   const [filter, setFilter] = useState([]);
 
-  // useEffect(() => {
-  //   const unsubscribe =
-  //     db
-  //       .collection("expense")
-  //       .orderby("timestamp", "desc")
-  //       .onSnapshot((snapshot) =>
-  //         setTransactions(
-  //           snapshot.docs.map((doc) => ({
-  //             id: doc.id,
-  //             data: doc.data(),
-  //           }))
-  //         )
-  //       ) &
-  //     setTotalIncome(
-  //       snapshot.docs.map((doc) =>
-  //         doc.data()?.email === auth?.currentUser?.email &&
-  //         doc.data()?.type === "income"
-  //           ? doc.data()?.price
-  //           : 0
-  //       )
-  //     ) &
-  //     setTotalExpense(
-  //       snapshot.docs.map((doc) =>
-  //         doc.data()?.email === auth?.currentUser?.email &&
-  //         doc.data()?.type === "expense"
-  //           ? doc.data()?.price
-  //           : 0
-  //       )
-  //     );
-  //   return unsubscribe;
-  // }, []);
+  useEffect(() => {
+    // Create a query for the current user's expenses
+    const q = query(
+      collection(db, "expense"),
+      where("email", "==", auth?.currentUser?.email),
+      orderBy("timestamp", "desc")
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        // Map documents to objects
+        const transactions = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setTransactions(transactions);
+
+        const incomesArray = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return data?.email === auth?.currentUser?.email &&
+            data?.type === "income"
+            ? Number(data?.price) || 0
+            : 0;
+        });
+
+        const expensesArray = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return data?.email === auth?.currentUser?.email &&
+            data?.type === "expense"
+            ? Number(data?.price) || 0
+            : 0;
+        });
+
+        // Set state arrays (if you want to keep individual amounts)
+        setTotalIncome(incomesArray);
+        setTotalExpense(expensesArray);
+      },
+      (error) => {
+        console.error("Error fetching data:", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     if (totalIncome) {
-      if (totalIncome.length == 0) {
+      if (totalIncome?.length == 0) {
         setIncome(0);
       } else {
         setIncome(totalIncome?.reduce((a, b) => Number(a) + Number(b), 0));
       }
     }
     if (totalExpense) {
-      if (totalExpense.length == 0) {
+      if (totalExpense?.length == 0) {
         setExpense(0);
       } else {
         setExpense(totalExpense?.reduce((a, b) => Number(a) + Number(b), 0));
@@ -71,12 +94,13 @@ const HomeScreen = ({ navigation }) => {
       setTotalBalance(0);
     }
   }, [totalExpense, totalExpense, income, expense]);
+
   useEffect(() => {
     if (transactions) {
       setFilter(
-        transactions.filter(
-          (item) => item.data.email === auth?.currentUser?.email
-        )
+        transactions.filter((transaction) => {
+          return transaction?.email === auth.currentUser.email; // ✅ return
+        })
       );
     }
   }, [transactions]);
@@ -171,7 +195,8 @@ const HomeScreen = ({ navigation }) => {
             {filter?.slice(0, 3).map((info) => (
               <View key={info.id}>
                 <CustomListItem
-                  info={info.data}
+                  key={info.id}
+                  info={info}
                   navigation={navigation}
                   id={info.id}
                 />

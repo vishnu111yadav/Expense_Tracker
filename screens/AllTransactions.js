@@ -1,8 +1,15 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
 import { StyleSheet, View, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import CustomListItem from "../components/CustomListItem";
+import { CustomListItem } from "../components/CustomListItem";
 import { auth, db } from "../firebase.js";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+} from "firebase/firestore";
 import { Text } from "react-native-elements";
 import { FontAwesome5 } from "@expo/vector-icons";
 
@@ -15,25 +22,34 @@ const AllTransactions = ({ navigation }) => {
   const [transactions, setTransactions] = useState([]);
   const [filter, setFilter] = useState([]);
   useEffect(() => {
-    const unsubscribe = db
-      .collection("expense")
-      .orderBy("timestamp", "desc")
-      .onSnapshot((snapshot) =>
-        setTransactions(
-          snapshot.docs.map((doc) => ({
-            id: doc.id,
-            data: doc.data(),
-          }))
-        )
-      );
+    const q = query(
+      collection(db, "expense"),
+      where("email", "==", auth?.currentUser?.email),
+      orderBy("timestamp", "desc")
+    );
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const transactions = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setTransactions(transactions);
+      },
+      (error) => {
+        console.error("Error fetching data:", error);
+      }
+    );
     return unsubscribe;
   }, []);
+
   useEffect(() => {
     if (transactions) {
       setFilter(
-        transactions.filter(
-          (transaction) => transaction.data.email === auth.currentUser.email
-        )
+        transactions.filter((transaction) => {
+          return transaction?.email === auth.currentUser.email; // ✅ return
+        })
       );
     }
   }, [transactions]);
@@ -46,7 +62,8 @@ const AllTransactions = ({ navigation }) => {
             {filter.map((info) => (
               <View key={info.id}>
                 <CustomListItem
-                  info={info.data}
+                  key={info.id}
+                  info={info}
                   navigation={navigation}
                   id={info.id}
                 />
